@@ -1,4 +1,4 @@
-module github.com/smap/shared-libs/go
+module github.com/smap-hcmut/shared-libs/go
 
 go 1.25.0
 

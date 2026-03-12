@@ -11,17 +11,8 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/smap/shared-libs/go/tracing"
+	"github.com/smap-hcmut/shared-libs/go/tracing"
 )
-
-// Resp is the standard response format with trace integration
-type Resp struct {
-	ErrorCode int    `json:"error_code"`
-	Message   string `json:"message"`
-	Data      any    `json:"data,omitempty"`
-	Errors    any    `json:"errors,omitempty"`
-	TraceID   string `json:"trace_id,omitempty"`
-}
 
 // ErrorReporter interface for external error reporting (Discord, etc.)
 type ErrorReporter interface {
@@ -43,28 +34,6 @@ func NewResponseManager(tracer tracing.TraceContext, reporter ErrorReporter) *Re
 		tracer:   tracer,
 		reporter: reporter,
 	}
-}
-
-// NewOKResp returns a new OK response with trace_id
-func (rm *ResponseManager) NewOKResp(ctx context.Context, data any) Resp {
-	resp := Resp{
-		ErrorCode: 0,
-		Message:   MessageSuccess,
-		Data:      data,
-	}
-
-	// Add trace_id if available
-	if traceID := rm.tracer.GetTraceID(ctx); traceID != "" {
-		resp.TraceID = traceID
-	}
-
-	return resp
-}
-
-// OK sends 200 JSON with data and trace_id
-func (rm *ResponseManager) OK(c *gin.Context, data any) {
-	resp := rm.NewOKResp(c.Request.Context(), data)
-	c.JSON(http.StatusOK, resp)
 }
 
 // Unauthorized sends 401 response with trace_id
@@ -217,13 +186,7 @@ func (rm *ResponseManager) buildErrorReport(c *gin.Context, errString string, ba
 	return sb.String()
 }
 
-// Convenience functions for backward compatibility
-
-// OK sends 200 JSON response (uses default response manager)
-func OK(c *gin.Context, data any) {
-	defaultManager := NewResponseManager(nil, nil)
-	defaultManager.OK(c, data)
-}
+// Convenience functions for backward compatibility (without trace integration)
 
 // Unauthorized sends 401 response (uses default response manager)
 func Unauthorized(c *gin.Context) {
@@ -241,13 +204,4 @@ func Forbidden(c *gin.Context) {
 func Error(c *gin.Context, err error) {
 	defaultManager := NewResponseManager(nil, nil)
 	defaultManager.Error(c, err)
-}
-
-// NewOKResp creates OK response (uses default response manager)
-func NewOKResp(data any) Resp {
-	return Resp{
-		ErrorCode: 0,
-		Message:   MessageSuccess,
-		Data:      data,
-	}
 }

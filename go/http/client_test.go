@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/smap/shared-libs/go/tracing"
+	"github.com/smap-hcmut/shared-libs/go/tracing"
 )
 
 func TestClient_Get(t *testing.T) {

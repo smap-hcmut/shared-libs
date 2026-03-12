@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/smap/shared-libs/go/kafka"
+	"github.com/smap-hcmut/shared-libs/go/kafka"
 )
 
 // ExampleNewTracedProducer demonstrates how to create and use a traced Kafka producer

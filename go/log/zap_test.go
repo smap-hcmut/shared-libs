@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/smap/shared-libs/go/tracing"
+	"github.com/smap-hcmut/shared-libs/go/tracing"
 )
 
 func TestZapLogger_BasicLogging(t *testing.T) {
