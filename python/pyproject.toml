@@ -1,0 +1,73 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "smap-shared-python"
+version = "1.0.0"
+description = "SMAP Python shared libraries with distributed tracing support"
+readme = "README.md"
+license = {text = "Proprietary"}
+authors = [
+    {name = "SMAP Team", email = "team@smap.com"}
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+]
+requires-python = ">=3.9"
+dependencies = [
+    "fastapi>=0.104.0",
+    "httpx>=0.25.0",
+    "aiokafka>=0.8.0",
+    "redis>=5.0.0",
+    "psycopg2-binary>=2.9.7",
+    "sqlalchemy>=2.0.46",
+    "asyncpg>=0.30.0",
+    "structlog>=23.2.0",
+    "uvicorn>=0.24.0",
+    "pytest>=8.4.2",
+    "pytest-asyncio>=1.2.0",
+    "loguru>=0.7.3",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0",
+    "pytest-asyncio>=0.21.0",
+    "pytest-cov>=4.1.0",
+    "black>=23.9.0",
+    "isort>=5.12.0",
+    "mypy>=1.6.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/smap/shared-libs"
+Repository = "https://github.com/smap/shared-libs.git"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["smap_shared*"]
+
+[tool.black]
+line-length = 88
+target-version = ['py39']
+
+[tool.isort]
+profile = "black"
+line_length = 88
+
+[tool.mypy]
+python_version = "3.9"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["smap_shared"]
+python_files = ["test_*.py", "*_test.py"]
