@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/smap/shared-libs/go/tracing"
+	"github.com/smap-hcmut/shared-libs/go/tracing"
 )
 
 // TestBasicGoTracing tests basic Go tracing functionality
