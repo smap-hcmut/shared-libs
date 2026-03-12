@@ -201,9 +201,13 @@ func Forbidden(c *gin.Context) {
 }
 
 // Error sends error response (uses default response manager)
-func Error(c *gin.Context, err error) {
-	defaultManager := NewResponseManager(nil, nil)
-	defaultManager.Error(c, err)
+func Error(c *gin.Context, err error, reporters ...ErrorReporter) {
+	var reporter ErrorReporter
+	if len(reporters) > 0 && reporters[0] != nil {
+		reporter = reporters[0]
+	}
+	manager := NewResponseManager(nil, reporter)
+	manager.Error(c, err)
 }
 
 // ErrorWithReporter sends error response with external error reporter (Discord, etc.)
