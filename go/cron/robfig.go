@@ -47,7 +47,7 @@ func (c *robfigCron) getFuncWrapper() func(HandleFunc) {
 }
 
 func (c *robfigCron) AddJob(info JobInfo) error {
-	if info.CronTime == "" {
+	if info.Schedule == "" {
 		return ErrInvalidCronTime
 	}
 	if info.Handler == nil {
@@ -56,7 +56,7 @@ func (c *robfigCron) AddJob(info JobInfo) error {
 
 	fw := c.getFuncWrapper()
 
-	_, err := c.cron.AddFunc(info.CronTime, func() {
+	_, err := c.cron.AddFunc(info.Schedule, func() {
 		fw(info.Handler)
 	})
 

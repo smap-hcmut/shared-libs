@@ -44,13 +44,14 @@ func NewWithTracer(secretKey string, tracer tracing.TraceContext) Manager {
 
 // Verify verifies the JWT token and returns the payload if valid
 func (m *implManager) Verify(token string) (Payload, error) {
-	return m.VerifyWithTrace(context.Background(), token)
+	payload, _, err := m.VerifyWithTrace(context.Background(), token)
+	return payload, err
 }
 
 // VerifyWithTrace verifies the JWT token with trace context
-func (m *implManager) VerifyWithTrace(ctx context.Context, token string) (Payload, error) {
+func (m *implManager) VerifyWithTrace(ctx context.Context, token string) (Payload, context.Context, error) {
 	if token == "" {
-		return Payload{}, fmt.Errorf("%w: token is empty", ErrInvalidToken)
+		return Payload{}, ctx, fmt.Errorf("%w: token is empty", ErrInvalidToken)
 	}
 
 	keyFunc := func(t *jwt.Token) (interface{}, error) {
@@ -62,38 +63,63 @@ func (m *implManager) VerifyWithTrace(ctx context.Context, token string) (Payloa
 
 	jwtToken, err := jwt.Parse(token, keyFunc)
 	if err != nil {
-		return Payload{}, fmt.Errorf("%w: %v", ErrInvalidToken, err)
+		return Payload{}, ctx, fmt.Errorf("%w: %v", ErrInvalidToken, err)
 	}
 
 	if !jwtToken.Valid {
-		return Payload{}, fmt.Errorf("%w: token is not valid", ErrInvalidToken)
+		return Payload{}, ctx, fmt.Errorf("%w: token is not valid", ErrInvalidToken)
 	}
 
 	mapClaims, ok := jwtToken.Claims.(jwt.MapClaims)
 	if !ok {
-		return Payload{}, fmt.Errorf("%w: failed to parse claims", ErrInvalidToken)
+		return Payload{}, ctx, fmt.Errorf("%w: failed to parse claims", ErrInvalidToken)
 	}
 
-	return payloadFromMapClaims(mapClaims), nil
+	payload := payloadFromMapClaims(mapClaims)
+
+	// Enhance context with trace_id from JWT ID if no trace exists
+	if m.tracer.GetTraceID(ctx) == "" && payload.Id != "" {
+		ctx = m.tracer.WithTraceID(ctx, payload.Id)
+	}
+
+	return payload, ctx, nil
 }
 
 // CreateToken creates a new JWT token with the provided payload
 func (m *implManager) CreateToken(payload Payload) (string, error) {
-	return m.CreateTokenWithTrace(context.Background(), payload)
+	tokenString, _, err := m.CreateTokenWithTrace(context.Background(), payload)
+	return tokenString, err
 }
 
 // CreateTokenWithTrace creates a new JWT token with trace context
-func (m *implManager) CreateTokenWithTrace(ctx context.Context, payload Payload) (string, error) {
+func (m *implManager) CreateTokenWithTrace(ctx context.Context, payload Payload) (string, context.Context, error) {
 	now := time.Now()
+
+	// Use trace_id as JWT ID if available
+	jwtID := fmt.Sprintf("%d", now.UnixNano())
+	if traceID := m.tracer.GetTraceID(ctx); traceID != "" {
+		jwtID = traceID
+	}
+
 	payload.StandardClaims = jwt.StandardClaims{
 		ExpiresAt: now.Add(TokenExpirationDuration).Unix(),
-		Id:        fmt.Sprintf("%d", now.UnixNano()),
+		Id:        jwtID,
 		NotBefore: now.Unix(),
 		IssuedAt:  now.Unix(),
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, payload)
-	return token.SignedString([]byte(m.secretKey))
+	tokenString, err := token.SignedString([]byte(m.secretKey))
+	if err != nil {
+		return "", ctx, err
+	}
+
+	// Ensure trace_id is in context
+	if m.tracer.GetTraceID(ctx) == "" {
+		ctx = m.tracer.WithTraceID(ctx, jwtID)
+	}
+
+	return tokenString, ctx, nil
 }
 
 // VerifyScope parses and verifies scope header

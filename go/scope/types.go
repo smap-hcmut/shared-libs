@@ -57,15 +57,13 @@ type Manager interface {
 	// Verify verifies a JWT token and returns the payload if valid
 	Verify(token string) (Payload, error)
 	// VerifyWithTrace verifies a JWT token with trace context
-	VerifyWithTrace(ctx context.Context, token string) (Payload, error)
+	VerifyWithTrace(ctx context.Context, token string) (Payload, context.Context, error)
 	// CreateToken creates a new JWT token with the provided payload
 	CreateToken(payload Payload) (string, error)
 	// CreateTokenWithTrace creates a new JWT token with trace context
-	CreateTokenWithTrace(ctx context.Context, payload Payload) (string, error)
+	CreateTokenWithTrace(ctx context.Context, payload Payload) (string, context.Context, error)
 	// VerifyScope parses and verifies scope header
 	VerifyScope(scopeHeader string) (Scope, error)
-	// VerifyScopeWithTrace parses and verifies scope header with trace context
-	VerifyScopeWithTrace(ctx context.Context, scopeHeader string) (Scope, error)
 }
 
 // Context key types for payload and scope with trace integration

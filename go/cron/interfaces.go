@@ -5,7 +5,7 @@ type HandleFunc func()
 
 // JobInfo contains information about a cron job
 type JobInfo struct {
-	CronTime string     `json:"cron_time" yaml:"cron_time"`
+	Schedule string     `json:"schedule" yaml:"schedule"`
 	Handler  HandleFunc `json:"-" yaml:"-"`
 	Name     string     `json:"name,omitempty" yaml:"name,omitempty"`
 }

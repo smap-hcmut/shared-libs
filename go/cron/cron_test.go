@@ -14,7 +14,7 @@ func TestCron(t *testing.T) {
 
 	var jobDone bool
 	err := c.AddJob(JobInfo{
-		CronTime: "* * * * * *", // Every second
+		Schedule: "* * * * * *", // Every second
 		Handler: func() {
 			jobDone = true
 			wg.Done()
@@ -57,7 +57,7 @@ func TestCronWrapper(t *testing.T) {
 	wg.Add(1)
 
 	err := c.AddJob(JobInfo{
-		CronTime: "* * * * * *",
+		Schedule: "* * * * * *",
 		Handler: func() {
 			wg.Done()
 		},
