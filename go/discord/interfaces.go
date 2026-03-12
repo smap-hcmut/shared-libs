@@ -11,6 +11,7 @@ import (
 
 // IDiscord defines the interface for Discord webhook service with trace integration.
 // Implementations are safe for concurrent use.
+// Also implements ErrorReporter interface for response package integration.
 type IDiscord interface {
 	// SendMessage sends a simple text message with trace context
 	SendMessage(ctx context.Context, content string) error
@@ -30,7 +31,7 @@ type IDiscord interface {
 	// SendInfo sends an info message with trace context
 	SendInfo(ctx context.Context, title, description string) error
 
-	// ReportBug sends a bug report with trace context
+	// ReportBug sends a bug report with trace context (implements ErrorReporter interface)
 	ReportBug(ctx context.Context, message string) error
 
 	// SendNotification sends a notification with fields and trace context

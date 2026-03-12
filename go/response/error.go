@@ -205,3 +205,18 @@ func Error(c *gin.Context, err error) {
 	defaultManager := NewResponseManager(nil, nil)
 	defaultManager.Error(c, err)
 }
+
+// ErrorWithReporter sends error response with external error reporter (Discord, etc.)
+func ErrorWithReporter(c *gin.Context, err error, reporter ErrorReporter) {
+	manager := NewResponseManager(nil, reporter)
+	manager.Error(c, err)
+}
+
+// ErrorWithDiscord sends error response with Discord reporting (convenience function)
+// This function accepts any type that implements ReportBug(ctx, message) method
+func ErrorWithDiscord(c *gin.Context, err error, discord interface {
+	ReportBug(context.Context, string) error
+}) {
+	manager := NewResponseManager(nil, discord)
+	manager.Error(c, err)
+}
