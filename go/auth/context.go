@@ -3,7 +3,7 @@ package auth
 import (
 	"context"
 
-	"github.com/smap/shared-libs/go/tracing"
+	"github.com/smap-hcmut/shared-libs/go/tracing"
 )
 
 // SetPayloadToContext attaches Payload to context with trace integration.

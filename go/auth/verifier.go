@@ -13,7 +13,7 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt"
-	"github.com/smap/shared-libs/go/tracing"
+	"github.com/smap-hcmut/shared-libs/go/tracing"
 )
 
 // Verifier verifies JWT tokens using public keys from JWKS endpoint with trace integration

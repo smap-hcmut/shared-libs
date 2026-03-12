@@ -3,7 +3,7 @@ package auth
 import (
 	"context"
 
-	"github.com/smap/shared-libs/go/tracing"
+	"github.com/smap-hcmut/shared-libs/go/tracing"
 )
 
 // HasPermission checks if user has a specific permission with trace logging

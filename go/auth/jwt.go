@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt"
-	"github.com/smap/shared-libs/go/tracing"
+	"github.com/smap-hcmut/shared-libs/go/tracing"
 )
 
 // Manager defines the interface for JWT operations with trace integration.
