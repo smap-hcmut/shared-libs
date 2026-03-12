@@ -69,7 +69,7 @@ func SetPayloadToContext(ctx context.Context, payload Payload) context.Context {
 	// Ensure trace context is preserved
 	tracer := tracing.NewTraceContext()
 	if traceID := tracer.GetTraceID(ctx); traceID != "" {
-		ctx = tracer.SetTraceID(ctx, traceID)
+		ctx = tracer.WithTraceID(ctx, traceID)
 	}
 	return context.WithValue(ctx, PayloadCtxKey{}, payload)
 }
@@ -103,7 +103,7 @@ func SetScopeToContext(ctx context.Context, scope Scope) context.Context {
 	// Ensure trace context is preserved
 	tracer := tracing.NewTraceContext()
 	if traceID := tracer.GetTraceID(ctx); traceID != "" {
-		ctx = tracer.SetTraceID(ctx, traceID)
+		ctx = tracer.WithTraceID(ctx, traceID)
 	}
 	return context.WithValue(ctx, ScopeCtxKey{}, scope)
 }

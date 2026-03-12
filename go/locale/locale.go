@@ -115,7 +115,7 @@ func SetLocaleToContext(ctx context.Context, lang string) context.Context {
 	// Ensure trace context is preserved
 	tracer := tracing.NewTraceContext()
 	if traceID := tracer.GetTraceID(ctx); traceID != "" {
-		ctx = tracer.SetTraceID(ctx, traceID)
+		ctx = tracer.WithTraceID(ctx, traceID)
 	}
 
 	return context.WithValue(ctx, Locale{}, lang)
@@ -131,7 +131,7 @@ func SetLocaleToContextWithTrace(ctx context.Context, lang string, tracer tracin
 	// Ensure trace context is preserved
 	if tracer != nil {
 		if traceID := tracer.GetTraceID(ctx); traceID != "" {
-			ctx = tracer.SetTraceID(ctx, traceID)
+			ctx = tracer.WithTraceID(ctx, traceID)
 		}
 	}
 
