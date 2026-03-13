@@ -145,6 +145,7 @@ func (m *JWTManager) CreateTokenWithTrace(ctx context.Context, payload Payload) 
 		Id:        jwtID,
 		NotBefore: now.Unix(),
 		IssuedAt:  now.Unix(),
+		Subject:   payload.UserID,
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, payload)

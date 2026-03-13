@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/smap-hcmut/shared-libs/go/scope"
 	"github.com/smap-hcmut/shared-libs/go/tracing"
 )
 
@@ -84,7 +85,19 @@ func (m *Middleware) Authenticate() gin.HandlerFunc {
 			}
 		}
 
-		// Update request context with enhanced context (includes trace_id and payload)
+		// Backward compatibility: attach scope.Scope so older services using scope.GetScopeFromContext don't fail
+		sc := scope.Scope{
+			UserID:   payload.UserID,
+			Username: payload.Username,
+			Role:     payload.Role,
+			JTI:      payload.Id,
+		}
+		if sc.UserID == "" && payload.Subject != "" {
+			sc.UserID = payload.Subject
+		}
+		enhancedCtx = scope.SetScopeToContext(enhancedCtx, sc)
+
+		// Update request context with enhanced context (includes trace_id and payload and scope)
 		c.Request = c.Request.WithContext(enhancedCtx)
 
 		c.Next()
