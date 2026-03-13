@@ -122,6 +122,7 @@ func (m *JWTManager) CreateToken(payload Payload) (string, error) {
 		Id:        fmt.Sprintf("%d", now.UnixNano()),
 		NotBefore: now.Unix(),
 		IssuedAt:  now.Unix(),
+		Subject:   payload.UserID, // set "sub" = UserID so Verify reads it back correctly
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, payload)
