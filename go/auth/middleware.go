@@ -3,19 +3,21 @@ package auth
 import (
 	"context"
 	"net/http"
+	"os"
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"github.com/smap-hcmut/shared-libs/go/scope"
 	"github.com/smap-hcmut/shared-libs/go/tracing"
 )
 
 // Middleware handles JWT authentication with trace integration
 type Middleware struct {
-	manager        Manager
-	blacklistRedis BlacklistChecker
-	cookieName     string
-	tracer         tracing.TraceContext
+	manager                 Manager
+	blacklistRedis          BlacklistChecker
+	cookieName              string
+	tracer                  tracing.TraceContext
+	allowBearerInProduction bool
+	productionDomain        string
 }
 
 // BlacklistChecker interface for checking if token is blacklisted
@@ -25,10 +27,12 @@ type BlacklistChecker interface {
 
 // MiddlewareConfig holds configuration for middleware
 type MiddlewareConfig struct {
-	Manager        Manager
-	BlacklistRedis BlacklistChecker // Optional
-	CookieName     string
-	Tracer         tracing.TraceContext // Optional, will create default if nil
+	Manager                 Manager
+	BlacklistRedis          BlacklistChecker // Optional
+	CookieName              string
+	Tracer                  tracing.TraceContext // Optional, will create default if nil
+	AllowBearerInProduction bool                 // If true, allow Bearer tokens even in production (default: false)
+	ProductionDomain        string               // Domain for cookies in production (e.g. ".tantai.dev")
 }
 
 // NewMiddleware creates a new authentication middleware with trace integration
@@ -41,10 +45,12 @@ func NewMiddleware(cfg MiddlewareConfig) *Middleware {
 	}
 
 	return &Middleware{
-		manager:        cfg.Manager,
-		blacklistRedis: cfg.BlacklistRedis,
-		cookieName:     cfg.CookieName,
-		tracer:         cfg.Tracer,
+		manager:                 cfg.Manager,
+		blacklistRedis:          cfg.BlacklistRedis,
+		cookieName:              cfg.CookieName,
+		tracer:                  cfg.Tracer,
+		allowBearerInProduction: cfg.AllowBearerInProduction,
+		productionDomain:        cfg.ProductionDomain,
 	}
 }
 
@@ -85,17 +91,6 @@ func (m *Middleware) Authenticate() gin.HandlerFunc {
 			}
 		}
 
-		// Backward compatibility: attach scope.Scope so older services using scope.GetScopeFromContext don't fail
-		sc := scope.Scope{
-			UserID:   payload.UserID,
-			Username: payload.Username,
-			Role:     payload.Role,
-			JTI:      payload.Id,
-		}
-		if sc.UserID == "" && payload.Subject != "" {
-			sc.UserID = payload.Subject
-		}
-		enhancedCtx = scope.SetScopeToContext(enhancedCtx, sc)
 
 		// Update request context with enhanced context (includes trace_id and payload and scope)
 		c.Request = c.Request.WithContext(enhancedCtx)
@@ -104,19 +99,26 @@ func (m *Middleware) Authenticate() gin.HandlerFunc {
 	}
 }
 
-// extractToken extracts JWT token from Authorization header or cookie
+// extractToken extracts JWT token from Authorization header or cookie.
+// Environment-based: Bearer tokens are only accepted in non-production environments,
+// unless AllowBearerInProduction is explicitly enabled.
 func (m *Middleware) extractToken(c *gin.Context) (string, error) {
-	// Try Authorization header first
-	authHeader := c.GetHeader("Authorization")
-	if authHeader != "" {
-		// Expected format: "Bearer <token>"
-		parts := strings.SplitN(authHeader, " ", 2)
-		if len(parts) == 2 && strings.ToLower(parts[0]) == "bearer" {
-			return parts[1], nil
+	isProduction := os.Getenv("ENVIRONMENT_NAME") == "production"
+	allowBearer := !isProduction || m.allowBearerInProduction
+
+	// Try Authorization header first (only if Bearer is allowed)
+	if allowBearer {
+		authHeader := c.GetHeader("Authorization")
+		if authHeader != "" {
+			// Expected format: "Bearer <token>"
+			parts := strings.SplitN(authHeader, " ", 2)
+			if len(parts) == 2 && strings.ToLower(parts[0]) == "bearer" {
+				return parts[1], nil
+			}
 		}
 	}
 
-	// Try cookie
+	// Try cookie (always allowed)
 	token, err := c.Cookie(m.cookieName)
 	if err == nil && token != "" {
 		return token, nil
