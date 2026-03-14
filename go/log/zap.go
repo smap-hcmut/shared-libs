@@ -27,12 +27,6 @@ func NewZapLogger(cfg ZapConfig) Logger {
 	return logger
 }
 
-// Init initializes and returns a new Zap logger instance with the provided configuration.
-// Deprecated: Use NewZapLogger instead for better trace integration
-func Init(cfg ZapConfig) Logger {
-	return NewZapLogger(cfg)
-}
-
 // For mapping config logger to app logger levels
 var logLevelMap = map[string]zapcore.Level{
 	LevelDebug:  zapcore.DebugLevel,

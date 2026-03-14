@@ -2,8 +2,6 @@ package auth
 
 import (
 	"context"
-
-	"github.com/smap-hcmut/shared-libs/go/tracing"
 )
 
 // HasPermission checks if user has a specific permission with trace logging
@@ -142,26 +140,3 @@ func RequireAnyRoleFunc(ctx context.Context, roles ...string) error {
 	return ErrInsufficientPermissions
 }
 
-// Enhanced helpers with trace integration
-
-// HasPermissionWithTrace checks permission and logs with trace_id
-func HasPermissionWithTrace(ctx context.Context, permission string, tracer tracing.TraceContext) bool {
-	result := HasPermission(ctx, permission)
-
-	// Log permission check with trace_id for audit purposes
-	traceID := tracer.GetTraceID(ctx)
-	userID := GetUserID(ctx)
-	role := GetUserRole(ctx)
-
-	// This would typically use the shared logger, but for now we'll keep it simple
-	_ = traceID // Use trace_id for logging in actual implementation
-	_ = userID  // Use user_id for logging
-	_ = role    // Use role for logging
-
-	return result
-}
-
-// GetContextInfoWithTrace returns comprehensive context information including trace
-func GetContextInfoWithTrace(ctx context.Context, tracer tracing.TraceContext) ContextInfo {
-	return GetContextInfo(ctx, tracer)
-}

@@ -129,21 +129,3 @@ func (c *tracedConsumerImpl) Errors() <-chan error {
 	}
 	return nil
 }
-
-// NewConsumerGroup creates a new Kafka consumer group (legacy function for backward compatibility).
-// Prefer using NewConsumer which returns IConsumer interface.
-func NewConsumerGroup(cfg ConsumerConfig) (sarama.ConsumerGroup, error) {
-	if err := validateConsumerConfig(cfg); err != nil {
-		return nil, err
-	}
-	config := sarama.NewConfig()
-	config.Version = KafkaVersion
-	config.Consumer.Group.Rebalance.Strategy = sarama.NewBalanceStrategyRoundRobin()
-	config.Consumer.Offsets.Initial = sarama.OffsetNewest
-	config.Consumer.Return.Errors = true
-	consumer, err := sarama.NewConsumerGroup(cfg.Brokers, cfg.GroupID, config)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create Kafka consumer group: %w", err)
-	}
-	return consumer, nil
-}

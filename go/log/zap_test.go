@@ -76,7 +76,7 @@ func TestZapLogger_JSONMode(t *testing.T) {
 
 func TestZapLogger_BackwardCompatibility(t *testing.T) {
 	// Test backward compatibility with Init function
-	logger := Init(DefaultDevelopmentConfig)
+	logger := NewZapLogger(DefaultDevelopmentConfig)
 
 	ctx := context.Background()
 
