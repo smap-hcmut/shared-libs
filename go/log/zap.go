@@ -107,13 +107,10 @@ func (l *zapLogger) init() {
 		}
 	}
 
-	var logger *zap.Logger
-	if l.cfg.Encoding == EncodingJSON {
-		logger = zap.New(core)
-	} else {
-		logger = zap.New(core, zap.AddCaller(), zap.AddCallerSkip(1)).With(
-			zap.String("service", serviceName),
-		)
+	// Always add caller so orderedCore can populate the "caller" field
+	logger := zap.New(core, zap.AddCaller(), zap.AddCallerSkip(1))
+	if l.cfg.Encoding != EncodingJSON {
+		logger = logger.With(zap.String("service", serviceName))
 	}
 
 	l.sugarLogger = logger.Sugar()
