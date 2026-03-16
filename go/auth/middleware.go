@@ -3,7 +3,6 @@ package auth
 import (
 	"context"
 	"net/http"
-	"os"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -12,12 +11,12 @@ import (
 
 // Middleware handles JWT authentication with trace integration
 type Middleware struct {
-	manager                 Manager
-	blacklistRedis          BlacklistChecker
-	cookieName              string
-	tracer                  tracing.TraceContext
-	allowBearerInProduction bool
-	productionDomain        string
+	manager          Manager
+	blacklistRedis   BlacklistChecker
+	cookieName       string
+	tracer           tracing.TraceContext
+	isProduction     bool // when true: cookie only; when false: Bearer allowed for dev/testing
+	productionDomain string
 }
 
 // BlacklistChecker interface for checking if token is blacklisted
@@ -27,12 +26,12 @@ type BlacklistChecker interface {
 
 // MiddlewareConfig holds configuration for middleware
 type MiddlewareConfig struct {
-	Manager                 Manager
-	BlacklistRedis          BlacklistChecker // Optional
-	CookieName              string
-	Tracer                  tracing.TraceContext // Optional, will create default if nil
-	AllowBearerInProduction bool                 // If true, allow Bearer tokens even in production (default: false)
-	ProductionDomain        string               // Domain for cookies in production (e.g. ".tantai.dev")
+	Manager          Manager
+	BlacklistRedis   BlacklistChecker      // Optional
+	CookieName       string
+	Tracer           tracing.TraceContext  // Optional, will create default if nil
+	IsProduction     bool                 // when true: Bearer disabled, cookie only; when false: Bearer allowed for dev
+	ProductionDomain string               // Domain for cookies in production (e.g. ".tantai.dev")
 }
 
 // NewMiddleware creates a new authentication middleware with trace integration
@@ -45,12 +44,12 @@ func NewMiddleware(cfg MiddlewareConfig) *Middleware {
 	}
 
 	return &Middleware{
-		manager:                 cfg.Manager,
-		blacklistRedis:          cfg.BlacklistRedis,
-		cookieName:              cfg.CookieName,
-		tracer:                  cfg.Tracer,
-		allowBearerInProduction: cfg.AllowBearerInProduction,
-		productionDomain:        cfg.ProductionDomain,
+		manager:          cfg.Manager,
+		blacklistRedis:   cfg.BlacklistRedis,
+		cookieName:       cfg.CookieName,
+		tracer:           cfg.Tracer,
+		isProduction:     cfg.IsProduction,
+		productionDomain: cfg.ProductionDomain,
 	}
 }
 
@@ -100,11 +99,9 @@ func (m *Middleware) Authenticate() gin.HandlerFunc {
 }
 
 // extractToken extracts JWT token from Authorization header or cookie.
-// Environment-based: Bearer tokens are only accepted in non-production environments,
-// unless AllowBearerInProduction is explicitly enabled.
+// Bearer tokens are only accepted when IsProduction=false (dev/staging).
 func (m *Middleware) extractToken(c *gin.Context) (string, error) {
-	isProduction := os.Getenv("ENVIRONMENT_NAME") == "production"
-	allowBearer := !isProduction || m.allowBearerInProduction
+	allowBearer := !m.isProduction
 
 	// Try Authorization header first (only if Bearer is allowed)
 	if allowBearer {

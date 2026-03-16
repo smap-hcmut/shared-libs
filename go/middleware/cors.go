@@ -113,9 +113,21 @@ func DefaultCORSConfig(environment string) CORSConfig {
 		MaxAge:           86400, // 24 hours
 	}
 
-	// Production: strict origin list only
+	// Production: production domains + localhost (any port) for dev UI testing prod API
 	if environment == "production" {
-		config.AllowedOrigins = productionOrigins
+		config.AllowOriginFunc = func(origin string) bool {
+			// Production domains
+			for _, allowed := range productionOrigins {
+				if origin == allowed {
+					return true
+				}
+			}
+			// Localhost (any port) - khi UI demo chạy localhost gọi prod API
+			if isLocalhostOrigin(origin) {
+				return true
+			}
+			return false
+		}
 		return config
 	}
 

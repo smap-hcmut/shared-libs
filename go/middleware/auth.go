@@ -16,24 +16,24 @@ type Middleware struct {
 
 // Config holds configuration for creating a Middleware instance.
 type Config struct {
-	JWTManager              auth.Manager
-	CookieName              string               // default: "smap_auth_token"
-	ProductionDomain        string               // optional, e.g. ".tantai.dev"
-	InternalKey             string               // key for X-Internal-Key header validation
-	BlacklistRedis          auth.BlacklistChecker // optional: Redis client for token blacklist
-	AllowBearerInProduction bool                 // allow Bearer tokens in production (default: false)
-	Tracer                  tracing.TraceContext  // optional: defaults to NewTraceContext()
+	JWTManager       auth.Manager
+	CookieName       string                // default: "smap_auth_token"
+	ProductionDomain string                // optional, e.g. ".tantai.dev"
+	InternalKey      string                // key for X-Internal-Key header validation
+	BlacklistRedis   auth.BlacklistChecker // optional: Redis client for token blacklist
+	IsProduction     bool                  // when true: Bearer disabled; when false: Bearer allowed for dev
+	Tracer           tracing.TraceContext  // optional: defaults to NewTraceContext()
 }
 
 // New creates a composite Middleware for Gin services.
 func New(cfg Config) *Middleware {
 	authMw := auth.NewMiddleware(auth.MiddlewareConfig{
-		Manager:                 cfg.JWTManager,
-		BlacklistRedis:          cfg.BlacklistRedis,
-		CookieName:              cfg.CookieName,
-		Tracer:                  cfg.Tracer,
-		AllowBearerInProduction: cfg.AllowBearerInProduction,
-		ProductionDomain:        cfg.ProductionDomain,
+		Manager:          cfg.JWTManager,
+		BlacklistRedis:   cfg.BlacklistRedis,
+		CookieName:       cfg.CookieName,
+		Tracer:           cfg.Tracer,
+		IsProduction:     cfg.IsProduction,
+		ProductionDomain: cfg.ProductionDomain,
 	})
 	return &Middleware{
 		authMw:      authMw,
