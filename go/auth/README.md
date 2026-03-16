@@ -13,3 +13,4 @@ JWT utilities with trace context integration.
 
 - `jwt.go` - JWT validation utilities with trace context
 - `middleware.go` - Authentication middleware
+- `internal_auth.go` - Shared internal middleware for `X-Internal-Key`

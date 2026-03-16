@@ -109,6 +109,7 @@ func (m *JWTManager) VerifyWithTrace(ctx context.Context, token string) (Payload
 
 	// Set payload in context
 	ctx = SetPayloadToContext(ctx, payload)
+	ctx = SetScopeToContext(ctx, NewScope(payload))
 
 	return payload, ctx, nil
 }
@@ -161,6 +162,7 @@ func (m *JWTManager) CreateTokenWithTrace(ctx context.Context, payload Payload) 
 
 	// Set payload in context
 	ctx = SetPayloadToContext(ctx, payload)
+	ctx = SetScopeToContext(ctx, NewScope(payload))
 
 	return tokenString, ctx, nil
 }
@@ -192,6 +194,7 @@ func (m *JWKSManager) VerifyWithTrace(ctx context.Context, token string) (Payloa
 
 	// Set payload in context
 	ctx = SetPayloadToContext(ctx, payload)
+	ctx = SetScopeToContext(ctx, NewScope(payload))
 
 	return payload, ctx, nil
 }
