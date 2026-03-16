@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	pkghttp "github.com/smap-hcmut/shared-libs/go/http"
+	pkghttp "github.com/smap-hcmut/shared-libs/go/httpclient"
 )
 
 // IGemini defines the interface for Google Gemini text generation.

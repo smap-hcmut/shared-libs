@@ -1,6 +1,6 @@
 package gemini
 
-import pkghttp "github.com/smap-hcmut/shared-libs/go/http"
+import pkghttp "github.com/smap-hcmut/shared-libs/go/httpclient"
 
 // GeminiConfig holds the configuration for the Gemini client
 type GeminiConfig struct {
