@@ -5,7 +5,6 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
 
@@ -204,90 +203,6 @@ func TestValidateAndGenerateTraceID(t *testing.T) {
 		}
 		if !tracer.ValidateTraceID(result) {
 			t.Errorf("Generated trace_id %s should be valid", result)
-		}
-	})
-}
-
-func TestGinTraceMiddleware(t *testing.T) {
-	gin.SetMode(gin.TestMode)
-
-	tracer := NewTraceContext()
-	propagator := NewHTTPPropagator(tracer)
-	middleware := GinTraceMiddleware(tracer, propagator)
-
-	t.Run("WithValidTraceID", func(t *testing.T) {
-		w := httptest.NewRecorder()
-		c, _ := gin.CreateTestContext(w)
-
-		traceID := uuid.New().String()
-		c.Request = httptest.NewRequest("GET", "/test", nil)
-		c.Request.Header.Set(TraceIDHeader, traceID)
-
-		middleware(c)
-
-		// Check Gin context
-		ginTraceID := GetTraceIDFromGinContext(c)
-		if ginTraceID != traceID {
-			t.Errorf("Expected trace_id %s in Gin context, got %s", traceID, ginTraceID)
-		}
-
-		// Check request context
-		ctxTraceID := tracer.GetTraceID(c.Request.Context())
-		if ctxTraceID != traceID {
-			t.Errorf("Expected trace_id %s in request context, got %s", traceID, ctxTraceID)
-		}
-
-		// Check response header
-		responseTraceID := w.Header().Get(TraceIDHeader)
-		if responseTraceID != traceID {
-			t.Errorf("Expected trace_id %s in response header, got %s", traceID, responseTraceID)
-		}
-	})
-
-	t.Run("WithoutTraceID", func(t *testing.T) {
-		w := httptest.NewRecorder()
-		c, _ := gin.CreateTestContext(w)
-		c.Request = httptest.NewRequest("GET", "/test", nil)
-
-		middleware(c)
-
-		// Check that a trace_id was generated
-		ginTraceID := GetTraceIDFromGinContext(c)
-		if ginTraceID == "" {
-			t.Error("Expected generated trace_id in Gin context")
-		}
-		if !tracer.ValidateTraceID(ginTraceID) {
-			t.Errorf("Generated trace_id %s should be valid", ginTraceID)
-		}
-
-		// Check consistency across contexts
-		ctxTraceID := tracer.GetTraceID(c.Request.Context())
-		responseTraceID := w.Header().Get(TraceIDHeader)
-
-		if ginTraceID != ctxTraceID || ginTraceID != responseTraceID {
-			t.Errorf("Trace_id should be consistent: gin=%s, ctx=%s, response=%s",
-				ginTraceID, ctxTraceID, responseTraceID)
-		}
-	})
-
-	t.Run("WithInvalidTraceID", func(t *testing.T) {
-		w := httptest.NewRecorder()
-		c, _ := gin.CreateTestContext(w)
-		c.Request = httptest.NewRequest("GET", "/test", nil)
-		c.Request.Header.Set(TraceIDHeader, "invalid-uuid")
-
-		middleware(c)
-
-		// Check that a new valid trace_id was generated
-		ginTraceID := GetTraceIDFromGinContext(c)
-		if ginTraceID == "" {
-			t.Error("Expected generated trace_id in Gin context")
-		}
-		if ginTraceID == "invalid-uuid" {
-			t.Error("Should not use invalid trace_id")
-		}
-		if !tracer.ValidateTraceID(ginTraceID) {
-			t.Errorf("Generated trace_id %s should be valid", ginTraceID)
 		}
 	})
 }

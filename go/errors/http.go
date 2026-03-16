@@ -3,6 +3,7 @@ package errors
 import (
 	"context"
 	"fmt"
+	"net/http"
 
 	"github.com/smap-hcmut/shared-libs/go/tracing"
 )
@@ -47,101 +48,101 @@ func (e *HTTPError) WithTraceID(traceID string) *HTTPError {
 // NewBadRequestError creates a 400 Bad Request error.
 func NewBadRequestError(message string) *HTTPError {
 	if message == "" {
-		message = MessageBadRequest
+		message = "Bad Request"
 	}
-	return NewHTTPError(StatusBadRequest, message)
+	return NewHTTPError(http.StatusBadRequest, message)
 }
 
 // NewBadRequestErrorWithTrace creates a 400 Bad Request error with trace context.
 func NewBadRequestErrorWithTrace(ctx context.Context, message string) *HTTPError {
 	if message == "" {
-		message = MessageBadRequest
+		message = "Bad Request"
 	}
-	return NewHTTPErrorWithTrace(ctx, StatusBadRequest, message)
+	return NewHTTPErrorWithTrace(ctx, http.StatusBadRequest, message)
 }
 
 // NewUnauthorizedError creates a 401 Unauthorized error.
 func NewUnauthorizedError() *HTTPError {
-	return NewHTTPError(StatusUnauthorized, MessageUnauthorized)
+	return NewHTTPError(http.StatusUnauthorized, "Unauthorized")
 }
 
 // NewUnauthorizedErrorWithTrace creates a 401 Unauthorized error with trace context.
 func NewUnauthorizedErrorWithTrace(ctx context.Context) *HTTPError {
-	return NewHTTPErrorWithTrace(ctx, StatusUnauthorized, MessageUnauthorized)
+	return NewHTTPErrorWithTrace(ctx, http.StatusUnauthorized, "Unauthorized")
 }
 
 // NewForbiddenError creates a 403 Forbidden error.
 func NewForbiddenError() *HTTPError {
-	return NewHTTPError(StatusForbidden, MessageForbidden)
+	return NewHTTPError(http.StatusForbidden, "Forbidden")
 }
 
 // NewForbiddenErrorWithTrace creates a 403 Forbidden error with trace context.
 func NewForbiddenErrorWithTrace(ctx context.Context) *HTTPError {
-	return NewHTTPErrorWithTrace(ctx, StatusForbidden, MessageForbidden)
+	return NewHTTPErrorWithTrace(ctx, http.StatusForbidden, "Forbidden")
 }
 
 // NewNotFoundError creates a 404 Not Found error.
 func NewNotFoundError(resource string) *HTTPError {
-	message := MessageNotFound
+	message := "Not Found"
 	if resource != "" {
-		message = fmt.Sprintf("%s: %s", resource, MessageNotFound)
+		message = fmt.Sprintf("%s: Not Found", resource)
 	}
-	return NewHTTPError(StatusNotFound, message)
+	return NewHTTPError(http.StatusNotFound, message)
 }
 
 // NewNotFoundErrorWithTrace creates a 404 Not Found error with trace context.
 func NewNotFoundErrorWithTrace(ctx context.Context, resource string) *HTTPError {
-	message := MessageNotFound
+	message := "Not Found"
 	if resource != "" {
-		message = fmt.Sprintf("%s: %s", resource, MessageNotFound)
+		message = fmt.Sprintf("%s: Not Found", resource)
 	}
-	return NewHTTPErrorWithTrace(ctx, StatusNotFound, message)
+	return NewHTTPErrorWithTrace(ctx, http.StatusNotFound, message)
 }
 
 // NewConflictError creates a 409 Conflict error.
 func NewConflictError(message string) *HTTPError {
 	if message == "" {
-		message = MessageConflict
+		message = "Conflict"
 	}
-	return NewHTTPError(StatusConflict, message)
+	return NewHTTPError(http.StatusConflict, message)
 }
 
 // NewConflictErrorWithTrace creates a 409 Conflict error with trace context.
 func NewConflictErrorWithTrace(ctx context.Context, message string) *HTTPError {
 	if message == "" {
-		message = MessageConflict
+		message = "Conflict"
 	}
-	return NewHTTPErrorWithTrace(ctx, StatusConflict, message)
+	return NewHTTPErrorWithTrace(ctx, http.StatusConflict, message)
 }
 
 // NewUnprocessableEntityError creates a 422 Unprocessable Entity error.
 func NewUnprocessableEntityError(message string) *HTTPError {
 	if message == "" {
-		message = MessageUnprocessableEntity
+		message = "Unprocessable Entity"
 	}
-	return NewHTTPError(StatusUnprocessableEntity, message)
+	return NewHTTPError(http.StatusUnprocessableEntity, message)
 }
 
 // NewUnprocessableEntityErrorWithTrace creates a 422 Unprocessable Entity error with trace context.
 func NewUnprocessableEntityErrorWithTrace(ctx context.Context, message string) *HTTPError {
 	if message == "" {
-		message = MessageUnprocessableEntity
+		message = "Unprocessable Entity"
 	}
-	return NewHTTPErrorWithTrace(ctx, StatusUnprocessableEntity, message)
+	return NewHTTPErrorWithTrace(ctx, http.StatusUnprocessableEntity, message)
 }
 
 // NewInternalServerError creates a 500 Internal Server Error.
 func NewInternalServerError(message string) *HTTPError {
 	if message == "" {
-		message = MessageInternalServerError
+		message = "Internal Server Error"
 	}
-	return NewHTTPError(StatusInternalServerError, message)
+	return NewHTTPError(http.StatusInternalServerError, message)
 }
 
 // NewInternalServerErrorWithTrace creates a 500 Internal Server Error with trace context.
 func NewInternalServerErrorWithTrace(ctx context.Context, message string) *HTTPError {
 	if message == "" {
-		message = MessageInternalServerError
+		message = "Internal Server Error"
 	}
-	return NewHTTPErrorWithTrace(ctx, StatusInternalServerError, message)
+	return NewHTTPErrorWithTrace(ctx, http.StatusInternalServerError, message)
 }
