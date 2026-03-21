@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -11,6 +12,7 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	pkgErrors "github.com/smap-hcmut/shared-libs/go/errors"
 	"github.com/smap-hcmut/shared-libs/go/tracing"
 )
 
@@ -77,9 +79,6 @@ func (rm *ResponseManager) parseError(err error, c *gin.Context) (int, Resp) {
 	ctx := c.Request.Context()
 	traceID := rm.tracer.GetTraceID(ctx)
 
-	// Handle different error types (simplified version)
-	// In a real implementation, you'd import the errors package and handle specific types
-
 	resp := Resp{
 		ErrorCode: InternalServerErrorCode,
 		Message:   DefaultErrorMessage,
@@ -88,6 +87,80 @@ func (rm *ResponseManager) parseError(err error, c *gin.Context) (int, Resp) {
 	// Add trace_id to all error responses
 	if traceID != "" {
 		resp.TraceID = traceID
+	}
+
+	var (
+		httpErr             *pkgErrors.HTTPError
+		validationErr       *pkgErrors.ValidationError
+		validationCollector *pkgErrors.ValidationErrorCollector
+		permissionErr       *pkgErrors.PermissionError
+		permissionCollector *pkgErrors.PermissionErrorCollector
+		businessErr         *pkgErrors.BusinessError
+	)
+
+	switch {
+	case errors.As(err, &httpErr):
+		statusCode := httpErr.StatusCode
+		if statusCode == 0 {
+			statusCode = http.StatusBadRequest
+		}
+		resp.ErrorCode = httpErr.Code
+		if httpErr.Message != "" {
+			resp.Message = httpErr.Message
+		}
+		return statusCode, resp
+	case errors.As(err, &validationErr):
+		if validationErr.Code != 0 {
+			resp.ErrorCode = validationErr.Code
+		} else {
+			resp.ErrorCode = ValidationErrorCode
+		}
+		if len(validationErr.Messages) > 0 {
+			resp.Message = strings.Join(validationErr.Messages, ", ")
+		} else {
+			resp.Message = ValidationErrorMsg
+		}
+		return http.StatusBadRequest, resp
+	case errors.As(err, &validationCollector):
+		resp.ErrorCode = ValidationErrorCode
+		if errs := validationCollector.Errors(); len(errs) > 0 && errs[0] != nil && errs[0].Code != 0 {
+			resp.ErrorCode = errs[0].Code
+		}
+		if msg := strings.TrimSpace(validationCollector.Error()); msg != "" {
+			resp.Message = msg
+		} else {
+			resp.Message = ValidationErrorMsg
+		}
+		return http.StatusBadRequest, resp
+	case errors.As(err, &permissionErr):
+		if permissionErr.Code != 0 {
+			resp.ErrorCode = permissionErr.Code
+		} else {
+			resp.ErrorCode = PermissionErrorCode
+		}
+		if len(permissionErr.Messages) > 0 {
+			resp.Message = strings.Join(permissionErr.Messages, ", ")
+		} else {
+			resp.Message = PermissionErrorMsg
+		}
+		return http.StatusForbidden, resp
+	case errors.As(err, &permissionCollector):
+		resp.ErrorCode = PermissionErrorCode
+		if errs := permissionCollector.Errors(); len(errs) > 0 && errs[0] != nil && errs[0].Code != 0 {
+			resp.ErrorCode = errs[0].Code
+		}
+		if msg := strings.TrimSpace(permissionCollector.Error()); msg != "" {
+			resp.Message = msg
+		} else {
+			resp.Message = PermissionErrorMsg
+		}
+		return http.StatusForbidden, resp
+	case errors.As(err, &businessErr):
+		resp.ErrorCode = ValidationErrorCode
+		if msg := strings.TrimSpace(businessErr.Message); msg != "" {
+			resp.Message = msg
+		}
+		return http.StatusBadRequest, resp
 	}
 
 	// For internal server errors, report to external system and capture stack trace
