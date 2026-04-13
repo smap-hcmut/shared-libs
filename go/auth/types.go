@@ -24,6 +24,19 @@ type Scope struct {
 	JTI      string `json:"jti"` // JWT ID for token revocation and tracking
 }
 
+// GetUserID returns the user ID. Implements the getter interface
+// expected by knowledge-srv model.ToScope().
+func (s Scope) GetUserID() string { return s.UserID }
+
+// GetUsername returns the username.
+func (s Scope) GetUsername() string { return s.Username }
+
+// GetRole returns the role.
+func (s Scope) GetRole() string { return s.Role }
+
+// GetJTI returns the JWT ID.
+func (s Scope) GetJTI() string { return s.JTI }
+
 // IsAdmin checks if user has ADMIN role.
 func (s Scope) IsAdmin() bool {
 	return s.Role == RoleAdmin
