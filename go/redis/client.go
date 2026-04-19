@@ -136,8 +136,8 @@ func (c *redisImpl) Close() error {
 }
 
 // Ping checks if Redis is reachable.
+// Not logged — Ping is used for health checks and would generate excessive noise.
 func (c *redisImpl) Ping(ctx context.Context) error {
-	c.logOperation(ctx, "PING", "")
 	return c.client.Ping(ctx).Err()
 }
 
