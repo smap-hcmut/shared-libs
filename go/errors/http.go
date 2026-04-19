@@ -8,22 +8,48 @@ import (
 	"github.com/smap-hcmut/shared-libs/go/tracing"
 )
 
+// isValidHTTPStatus checks if the code is a valid HTTP status code (100-599).
+func isValidHTTPStatus(code int) bool {
+	return code >= 100 && code <= 599
+}
+
 // NewHTTPError creates a new HTTP error.
+// If code is a valid HTTP status (100-599), it is used as both the business
+// error code and the HTTP status code. Otherwise the code is kept as the
+// business error code and the HTTP status defaults to 400 Bad Request.
 func NewHTTPError(code int, message string) *HTTPError {
+	statusCode := code
+	if !isValidHTTPStatus(code) {
+		statusCode = http.StatusBadRequest
+	}
 	return &HTTPError{
 		Code:       code,
 		Message:    message,
-		StatusCode: code,
+		StatusCode: statusCode,
+	}
+}
+
+// NewHTTPErrorWithStatus creates an HTTP error with separate business code and
+// HTTP status code, for cases where you need explicit control over both.
+func NewHTTPErrorWithStatus(statusCode int, code int, message string) *HTTPError {
+	return &HTTPError{
+		Code:       code,
+		Message:    message,
+		StatusCode: statusCode,
 	}
 }
 
 // NewHTTPErrorWithTrace creates a new HTTP error with trace context.
 func NewHTTPErrorWithTrace(ctx context.Context, code int, message string) *HTTPError {
 	tracer := tracing.NewTraceContext()
+	statusCode := code
+	if !isValidHTTPStatus(code) {
+		statusCode = http.StatusBadRequest
+	}
 	return &HTTPError{
 		Code:       code,
 		Message:    message,
-		StatusCode: code,
+		StatusCode: statusCode,
 		TraceID:    tracer.GetTraceID(ctx),
 	}
 }
