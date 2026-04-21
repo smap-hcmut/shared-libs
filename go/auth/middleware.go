@@ -27,9 +27,9 @@ type BlacklistChecker interface {
 // MiddlewareConfig holds configuration for middleware
 type MiddlewareConfig struct {
 	Manager          Manager
-	BlacklistRedis   BlacklistChecker      // Optional
+	BlacklistRedis   BlacklistChecker // Optional
 	CookieName       string
-	Tracer           tracing.TraceContext  // Optional, will create default if nil
+	Tracer           tracing.TraceContext // Optional, will create default if nil
 	IsProduction     bool                 // when true: Bearer disabled, cookie only; when false: Bearer allowed for dev
 	ProductionDomain string               // Domain for cookies in production (e.g. ".tantai.dev")
 }
@@ -90,6 +90,10 @@ func (m *Middleware) Authenticate() gin.HandlerFunc {
 			}
 		}
 
+		// Inject user_id into tracing context for structured log enrichment
+		if payload.UserID != "" {
+			enhancedCtx = tracing.WithUserID(enhancedCtx, payload.UserID)
+		}
 
 		// Update request context with enhanced context (includes trace_id and payload and scope)
 		c.Request = c.Request.WithContext(enhancedCtx)

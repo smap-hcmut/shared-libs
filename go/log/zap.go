@@ -183,7 +183,7 @@ func (c *orderedCore) Write(ent zapcore.Entry, fields []zapcore.Field) error {
 // loggerKey holds the context key used for loggers.
 type loggerKey struct{}
 
-// ctx returns a logger with trace_id automatically injected from context
+// ctx returns a logger with trace_id and user_id automatically injected from context
 func (l *zapLogger) ctx(ctx context.Context) *zap.SugaredLogger {
 	if ctx == nil {
 		panic("nil context passed to Logger")
@@ -196,11 +196,18 @@ func (l *zapLogger) ctx(ctx context.Context) *zap.SugaredLogger {
 		logger = customLogger
 	}
 
-	// Inject trace_id into the logger if present in context
+	// Build enrichment fields from context
+	var fields []interface{}
 	if traceID := l.tracer.GetTraceID(ctx); traceID != "" {
-		return logger.With(TraceIDKey, traceID)
+		fields = append(fields, TraceIDKey, traceID)
+	}
+	if userID := tracing.GetUserID(ctx); userID != "" {
+		fields = append(fields, "user_id", userID)
 	}
 
+	if len(fields) > 0 {
+		return logger.With(fields...)
+	}
 	return logger
 }
 
