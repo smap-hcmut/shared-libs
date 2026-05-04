@@ -10,6 +10,7 @@ import (
 	"github.com/smap-hcmut/shared-libs/go/tracing"
 )
 
+//go:generate mockery --name=IRedis
 // IRedis defines the interface for Redis operations with trace logging.
 // Implementations are safe for concurrent use.
 type IRedis interface {

@@ -10,6 +10,7 @@ import (
 	"github.com/smap-hcmut/shared-libs/go/tracing"
 )
 
+//go:generate mockery --name=Manager
 // Manager defines the interface for JWT operations with trace integration.
 type Manager interface {
 	Verify(token string) (Payload, error)

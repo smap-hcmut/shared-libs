@@ -17,6 +17,9 @@ go.work
 # Dependency directories (remove the comment below to include it)
 */vendor/
 
+# Generated mocks
+**/mock_*.go
+
 # Python
 __pycache__/
 *.py[cod]

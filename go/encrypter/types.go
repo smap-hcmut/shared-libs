@@ -2,6 +2,7 @@ package encrypter
 
 import "context"
 
+//go:generate mockery --name=Encrypter
 // Encrypter provides encryption, decryption, and password hashing with trace integration
 type Encrypter interface {
 	// Encrypt encrypts a plaintext string and returns a base64-encoded ciphertext

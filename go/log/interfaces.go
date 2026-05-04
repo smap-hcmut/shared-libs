@@ -2,6 +2,7 @@ package log
 
 import "context"
 
+//go:generate mockery --name=Logger
 // Logger interface for trace-aware logging with backward compatibility
 type Logger interface {
 	// Context-aware logging methods (primary interface)
