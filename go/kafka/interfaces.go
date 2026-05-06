@@ -6,6 +6,7 @@ import (
 	"github.com/IBM/sarama"
 )
 
+//go:generate mockery --name=IProducer
 // IProducer defines the interface for Kafka producer.
 // Implementations are safe for concurrent use.
 type IProducer interface {
