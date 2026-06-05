@@ -14,11 +14,14 @@ func HasPermission(ctx context.Context, permission string) bool {
 	// For now, map permissions to roles
 	// In the future, this could check against a permission database
 	switch permission {
-	case "projects:create", "projects:update":
-		return payload.Role == "ANALYST" || payload.Role == "ADMIN"
-	case "projects:delete", "users:manage":
+	case "campaigns:create", "campaigns:update", "campaigns:delete",
+		"projects:create", "projects:update", "projects:delete",
+		"datasources:create", "datasources:update", "datasources:delete",
+		"targets:create", "targets:update", "targets:delete",
+		"pipeline:trigger", "crisis:configure", "ontology:configure",
+		"users:manage":
 		return payload.Role == "ADMIN"
-	case "projects:read":
+	case "campaigns:read", "projects:read", "datasources:read", "targets:read":
 		return payload.Role == "VIEWER" || payload.Role == "ANALYST" || payload.Role == "ADMIN"
 	default:
 		return false
@@ -139,4 +142,3 @@ func RequireAnyRoleFunc(ctx context.Context, roles ...string) error {
 
 	return ErrInsufficientPermissions
 }
-
