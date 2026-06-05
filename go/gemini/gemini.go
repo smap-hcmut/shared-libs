@@ -27,16 +27,16 @@ func (g *geminiImpl) Generate(ctx context.Context, prompt string) (string, error
 
 	body, statusCode, err := g.httpClient.Post(ctx, url, req, nil)
 	if err != nil {
-		return "", fmt.Errorf("failed to call Gemini API: %w", err)
+		return "", fmt.Errorf("failed to call gemini API: %w", err)
 	}
 
 	if statusCode != http.StatusOK {
-		return "", fmt.Errorf("Gemini API returned status: %d, body: %s", statusCode, string(body))
+		return "", fmt.Errorf("gemini API returned status: %d, body: %s", statusCode, string(body))
 	}
 
 	var resp Response
 	if err := json.Unmarshal(body, &resp); err != nil {
-		return "", fmt.Errorf("failed to unmarshal Gemini response: %w", err)
+		return "", fmt.Errorf("failed to unmarshal gemini response: %w", err)
 	}
 
 	if len(resp.Candidates) == 0 || len(resp.Candidates[0].Content.Parts) == 0 {

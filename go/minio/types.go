@@ -185,12 +185,3 @@ type uploadStatusTracker struct {
 	results  map[string]*AsyncUploadResult
 	mu       sync.RWMutex
 }
-
-// progressReader wraps an io.Reader to track upload progress
-type progressReader struct {
-	Reader     io.Reader
-	TotalBytes int64
-	bytesRead  int64
-	OnProgress func(bytesRead int64)
-	mu         sync.Mutex
-}

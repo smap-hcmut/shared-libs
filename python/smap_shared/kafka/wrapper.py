@@ -5,7 +5,6 @@ Provides drop-in replacements for existing analysis-srv Kafka classes
 with enhanced tracing capabilities.
 """
 
-import json
 import logging
 from typing import Optional, Dict, List, Callable, Awaitable
 

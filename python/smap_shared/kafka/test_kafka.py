@@ -8,7 +8,6 @@ import asyncio
 import json
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
-from typing import Dict, Any
 
 from ..tracing import TraceContext, KafkaPropagator
 from .config import KafkaProducerConfig, KafkaConsumerConfig, KafkaMessage

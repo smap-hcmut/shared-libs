@@ -8,7 +8,6 @@ from the shared tracing library.
 import sys
 import json
 import email.utils
-import os
 from datetime import timezone, timedelta
 from typing import Optional, Dict, Any
 from contextvars import ContextVar
@@ -23,7 +22,7 @@ except ImportError:
     )
 
 from .interfaces import LoggerInterface
-from .config import LoggerConfig, LogLevel
+from .config import LoggerConfig
 from .constants import (
     TRACE_ID_KEY,
     REQUEST_ID_KEY,

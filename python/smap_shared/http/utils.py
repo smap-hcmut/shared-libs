@@ -7,11 +7,10 @@ with automatic trace_id propagation and error handling.
 
 import json
 import logging
-from typing import Any, Dict, Optional, Union, Tuple
+from typing import Any, Dict, Optional, Tuple
 from urllib.parse import urljoin, urlparse
 
-from .client import TracedHTTPClient, create_async_client, create_sync_client
-from ..tracing import get_trace_id, set_trace_id
+from .client import create_async_client, create_sync_client
 
 logger = logging.getLogger(__name__)
 

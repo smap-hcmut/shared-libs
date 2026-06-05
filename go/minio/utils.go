@@ -146,7 +146,7 @@ func validateObjectName(objectName string) error {
 	}
 	return nil
 }
-func handleMinIOError(err error, operation string) *StorageError {
+func handleMinIOError(err error, operation string) error {
 	if err == nil {
 		return nil
 	}
@@ -157,9 +157,9 @@ func handleMinIOError(err error, operation string) *StorageError {
 		case "NoSuchKey":
 			return NewObjectNotFoundError("")
 		case "AccessDenied":
-			return &StorageError{Code: ErrCodePermission, Message: "Access denied", Operation: operation, Cause: err}
+			return &StorageError{Code: ErrCodePermission, Message: "access denied", Operation: operation, Cause: err}
 		default:
-			return &StorageError{Code: ErrCodeConnection, Message: fmt.Sprintf("MinIO operation failed: %s", minioErr.Code), Operation: operation, Cause: err}
+			return &StorageError{Code: ErrCodeConnection, Message: fmt.Sprintf("minio operation failed: %s", minioErr.Code), Operation: operation, Cause: err}
 		}
 	}
 	return NewConnectionError(err)

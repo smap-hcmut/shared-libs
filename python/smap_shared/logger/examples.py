@@ -5,7 +5,6 @@ Shows how to migrate from existing service-specific logger implementations
 to the shared library with automatic trace_id injection.
 """
 
-from typing import Optional
 from smap_shared.logger import Logger, LoggerConfig, LogLevel
 from smap_shared.logger.compat import setup_logging, trace_context, LoggerCompat
 from smap_shared.tracing.context import set_trace_id, generate_trace_id

@@ -4,7 +4,6 @@ Logger configuration for Python services with trace integration.
 
 from dataclasses import dataclass
 from enum import Enum
-from typing import Optional
 
 
 class LogLevel(str, Enum):

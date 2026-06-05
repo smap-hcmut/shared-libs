@@ -4,7 +4,7 @@ HTTP propagator implementation for Python services.
 Handles trace_id injection and extraction for HTTP requests and responses.
 """
 
-from typing import Optional, Dict, Union
+from typing import Optional, Dict
 import logging
 
 from .interfaces import HTTPPropagatorInterface

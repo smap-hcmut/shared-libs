@@ -5,11 +5,6 @@ Tests the core functionality and trace integration.
 """
 
 import pytest
-import json
-import io
-import sys
-from contextlib import redirect_stdout
-from unittest.mock import patch
 
 from .logger import Logger
 from .config import LoggerConfig, LogLevel

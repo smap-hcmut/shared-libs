@@ -2,10 +2,7 @@
 Test cases for HTTP utilities with trace integration.
 """
 
-import json
-import pytest
 from unittest.mock import patch, MagicMock
-from typing import Any, Dict
 
 from .utils import HTTPUtils, ServiceClient, fetch_json_sync, post_json_data_sync
 

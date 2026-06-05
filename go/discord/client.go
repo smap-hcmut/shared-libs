@@ -81,7 +81,7 @@ func (d *discordImpl) logOperation(ctx context.Context, operation, details strin
 
 // sendWithRetry sends a webhook payload with retry logic and trace integration.
 func (d *discordImpl) sendWithRetry(ctx context.Context, payload *WebhookPayload) error {
-	d.logOperation(ctx, "sendWithRetry", fmt.Sprintf("attempting to send webhook message"))
+	d.logOperation(ctx, "sendWithRetry", "attempting to send webhook message")
 
 	var lastErr error
 	for attempt := 0; attempt <= d.config.RetryCount; attempt++ {

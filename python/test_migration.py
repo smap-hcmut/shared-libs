@@ -13,7 +13,7 @@ This script tests:
 import json
 import sys
 from io import StringIO
-from contextlib import redirect_stdout, redirect_stderr
+from contextlib import redirect_stdout
 
 # Test imports
 from smap_shared.logger import Logger, LoggerConfig, LogLevel

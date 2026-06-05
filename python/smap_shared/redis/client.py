@@ -22,13 +22,7 @@ except ImportError:
     import logging
     logger = logging.getLogger(__name__)
 
-from .interfaces import ICacheInterface
 from .config import RedisConfig
-from .constants import (
-    TRACE_LOG_FORMAT,
-    OPERATION_LOG_FORMAT,
-    ERROR_CLIENT_NOT_INITIALIZED,
-)
 
 # Import trace context from shared tracing library
 try:

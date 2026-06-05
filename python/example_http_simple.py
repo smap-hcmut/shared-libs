@@ -11,7 +11,7 @@ import os
 # Add the smap_shared package to Python path
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '.'))
 
-from smap_shared.tracing import set_trace_id, get_trace_id, generate_trace_id, clear_trace_id
+from smap_shared.tracing import set_trace_id, generate_trace_id, clear_trace_id
 from smap_shared.http.client import TracedHTTPClient
 
 

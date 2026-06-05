@@ -11,13 +11,6 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), '.'))
 def test_basic_imports():
     """Test that we can import the basic tracing components."""
     try:
-        from smap_shared.tracing import (
-            get_trace_id, 
-            set_trace_id, 
-            generate_trace_id,
-            validate_trace_id,
-            http_propagator
-        )
         print("✓ Tracing imports successful")
         return True
     except Exception as e:

@@ -30,14 +30,8 @@ except ImportError:
         pass
 
 from ..tracing import (
-    get_trace_id,
-    set_trace_id,
-    generate_trace_id,
-    validate_trace_id,
-    http_propagator,
     HTTPPropagator,
     TraceContext,
-    trace_context,
 )
 
 logger = logging.getLogger(__name__)

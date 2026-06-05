@@ -6,8 +6,8 @@ with automatic trace_id injection in logs.
 """
 
 import asyncio
-from smap_shared.postgres import TracedPostgresClient, PostgresConfig
-from smap_shared.redis import TracedRedisClient, RedisConfig
+from smap_shared.postgres import PostgresConfig
+from smap_shared.redis import RedisConfig
 from smap_shared.tracing import set_trace_id, generate_trace_id
 
 
