@@ -20,6 +20,12 @@ import (
 type LLM interface {
 	// Generate sends a prompt and returns the generated text.
 	Generate(ctx context.Context, prompt string) (string, error)
+	// GenerateStream sends a prompt and returns a channel that yields the
+	// response in incremental token chunks. The channel closes when the
+	// upstream finishes; transport errors are reported via the second
+	// channel which carries at most one error. Callers must drain the text
+	// channel before reading the error.
+	GenerateStream(ctx context.Context, prompt string) (<-chan string, <-chan error)
 	// Name returns a human-readable identifier (e.g. "gemini", "openai/gpt-4o-mini").
 	Name() string
 }
@@ -225,6 +231,110 @@ func (p *provider) doRequest(ctx context.Context, prompt string) (string, error)
 	}
 
 	return chatResp.Choices[0].Message.Content, nil
+}
+
+// GenerateStream issues a streaming chat completion request. The chunk
+// channel receives content deltas in order; the error channel receives a
+// single value (nil on clean finish, non-nil on transport/protocol failure).
+func (p *provider) GenerateStream(ctx context.Context, prompt string) (<-chan string, <-chan error) {
+	chunks := make(chan string, 8)
+	errs := make(chan error, 1)
+
+	go func() {
+		defer close(chunks)
+		defer close(errs)
+
+		reqBody := struct {
+			chatRequest
+			Stream bool `json:"stream"`
+		}{
+			chatRequest: chatRequest{
+				Model:    p.model,
+				Messages: []chatMessage{{Role: "user", Content: prompt}},
+			},
+			Stream: true,
+		}
+		bodyBytes, err := json.Marshal(reqBody)
+		if err != nil {
+			errs <- fmt.Errorf("marshal request: %w", err)
+			return
+		}
+
+		req, err := http.NewRequestWithContext(ctx, http.MethodPost, p.baseURL, strings.NewReader(string(bodyBytes)))
+		if err != nil {
+			errs <- fmt.Errorf("create request: %w", err)
+			return
+		}
+		req.Header.Set("Content-Type", "application/json")
+		req.Header.Set("Authorization", "Bearer "+p.apiKey)
+		req.Header.Set("Accept", "text/event-stream")
+
+		resp, err := p.client.Do(req)
+		if err != nil {
+			errs <- &httpError{StatusCode: 0, Message: err.Error()}
+			return
+		}
+		defer resp.Body.Close()
+
+		if resp.StatusCode != http.StatusOK {
+			body, _ := io.ReadAll(resp.Body)
+			errs <- &httpError{
+				StatusCode: resp.StatusCode,
+				Message:    fmt.Sprintf("HTTP %d: %s", resp.StatusCode, string(body)),
+			}
+			return
+		}
+
+		// SSE frame format: lines prefixed with "data: ", chunks separated by
+		// blank lines; "[DONE]" sentinel ends the stream.
+		buf := make([]byte, 4096)
+		var carry []byte
+		for {
+			n, err := resp.Body.Read(buf)
+			if n > 0 {
+				carry = append(carry, buf[:n]...)
+				for {
+					idx := strings.Index(string(carry), "\n")
+					if idx < 0 {
+						break
+					}
+					line := strings.TrimSpace(string(carry[:idx]))
+					carry = carry[idx+1:]
+					if !strings.HasPrefix(line, "data:") {
+						continue
+					}
+					payload := strings.TrimSpace(strings.TrimPrefix(line, "data:"))
+					if payload == "" || payload == "[DONE]" {
+						continue
+					}
+					var event struct {
+						Choices []struct {
+							Delta struct {
+								Content string `json:"content"`
+							} `json:"delta"`
+						} `json:"choices"`
+					}
+					if e := json.Unmarshal([]byte(payload), &event); e != nil {
+						continue
+					}
+					for _, ch := range event.Choices {
+						if ch.Delta.Content != "" {
+							chunks <- ch.Delta.Content
+						}
+					}
+				}
+			}
+			if err != nil {
+				if err == io.EOF {
+					return
+				}
+				errs <- fmt.Errorf("stream read: %w", err)
+				return
+			}
+		}
+	}()
+
+	return chunks, errs
 }
 
 // ── Error classification ────────────────────────────────────────────────────

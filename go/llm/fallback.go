@@ -103,6 +103,27 @@ func (f *FallbackProvider) Generate(ctx context.Context, prompt string) (string,
 	return "", fmt.Errorf("llm: all %d providers failed: %s", tried, strings.Join(errs, "; "))
 }
 
+// GenerateStream delegates to the next available provider's streaming path.
+// Unlike Generate, we do not retry across providers mid-stream — once a
+// provider starts emitting tokens we are committed to it; transient
+// failures surface on the error channel and the caller can fall back to
+// the non-streaming Generate path if desired.
+func (f *FallbackProvider) GenerateStream(ctx context.Context, prompt string) (<-chan string, <-chan error) {
+	n := len(f.providers)
+	start := int(f.counter.Add(1) - 1)
+	for i := 0; i < n; i++ {
+		idx := (start + i) % n
+		p := f.providers[idx]
+		if f.isCircuitOpen(p.Name()) {
+			continue
+		}
+		return p.GenerateStream(ctx, prompt)
+	}
+	// All providers circuit-broken — reset and try the first.
+	f.resetCircuits()
+	return f.providers[start%n].GenerateStream(ctx, prompt)
+}
+
 // ── Circuit breaker ─────────────────────────────────────────────────────────
 
 func (f *FallbackProvider) isCircuitOpen(name string) bool {
