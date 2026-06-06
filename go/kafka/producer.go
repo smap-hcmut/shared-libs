@@ -19,14 +19,24 @@ func validateProducerConfig(cfg Config) error {
 	return nil
 }
 
+// applyProducerHardening configures producer for exactly-once-ish delivery:
+// idempotent producer + WaitForAll acks + MaxOpenRequests=1 (Sarama
+// requirement) eliminates UAP duplicates that previously caused
+// double-insert insights when broker retried in-flight messages.
+func applyProducerHardening(cfg *sarama.Config) {
+	cfg.Producer.RequiredAcks = sarama.WaitForAll
+	cfg.Producer.Compression = sarama.CompressionSnappy
+	cfg.Producer.Return.Successes = true
+	cfg.Producer.Retry.Max = ProducerRetryMax
+	cfg.Producer.Timeout = ProducerTimeout
+	cfg.Producer.Idempotent = true
+	cfg.Net.MaxOpenRequests = 1
+}
+
 // newProducerImpl creates a new Kafka producer implementation without tracing
 func newProducerImpl(cfg Config) (*producerImpl, error) {
 	config := sarama.NewConfig()
-	config.Producer.RequiredAcks = sarama.WaitForLocal
-	config.Producer.Compression = sarama.CompressionSnappy
-	config.Producer.Return.Successes = true
-	config.Producer.Retry.Max = ProducerRetryMax
-	config.Producer.Timeout = ProducerTimeout
+	applyProducerHardening(config)
 	config.Version = KafkaVersion
 
 	producer, err := sarama.NewSyncProducer(cfg.Brokers, config)
@@ -39,11 +49,7 @@ func newProducerImpl(cfg Config) (*producerImpl, error) {
 // newTracedProducerImpl creates a new Kafka producer implementation with tracing
 func newTracedProducerImpl(cfg Config) (*tracedProducerImpl, error) {
 	config := sarama.NewConfig()
-	config.Producer.RequiredAcks = sarama.WaitForLocal
-	config.Producer.Compression = sarama.CompressionSnappy
-	config.Producer.Return.Successes = true
-	config.Producer.Retry.Max = ProducerRetryMax
-	config.Producer.Timeout = ProducerTimeout
+	applyProducerHardening(config)
 	config.Version = KafkaVersion
 
 	producer, err := sarama.NewSyncProducer(cfg.Brokers, config)

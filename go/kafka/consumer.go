@@ -23,7 +23,12 @@ func validateConsumerConfig(cfg ConsumerConfig) error {
 func newConsumerImpl(cfg ConsumerConfig) (*consumerImpl, error) {
 	config := sarama.NewConfig()
 	config.Version = KafkaVersion
-	config.Consumer.Group.Rebalance.Strategy = sarama.NewBalanceStrategyRoundRobin()
+	// Sticky cooperative rebalancing avoids stop-the-world partition reassignment
+	// on pod restarts; replacing the prior RoundRobin strategy that triggered
+	// full rebalance churn for every analysis-consumer scale event.
+	config.Consumer.Group.Rebalance.GroupStrategies = []sarama.BalanceStrategy{
+		sarama.NewBalanceStrategySticky(),
+	}
 	config.Consumer.Offsets.Initial = sarama.OffsetNewest
 	config.Consumer.Return.Errors = true
 
@@ -41,7 +46,9 @@ func newConsumerImpl(cfg ConsumerConfig) (*consumerImpl, error) {
 func newTracedConsumerImpl(cfg ConsumerConfig) (*tracedConsumerImpl, error) {
 	config := sarama.NewConfig()
 	config.Version = KafkaVersion
-	config.Consumer.Group.Rebalance.Strategy = sarama.NewBalanceStrategyRoundRobin()
+	config.Consumer.Group.Rebalance.GroupStrategies = []sarama.BalanceStrategy{
+		sarama.NewBalanceStrategySticky(),
+	}
 	config.Consumer.Offsets.Initial = sarama.OffsetNewest
 	config.Consumer.Return.Errors = true
 

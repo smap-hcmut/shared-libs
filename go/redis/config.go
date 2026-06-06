@@ -8,14 +8,32 @@ const (
 
 	// DefaultDB is the default Redis database number
 	DefaultDB = 0
+
+	// DefaultPoolSize is the maximum number of socket connections per CPU.
+	// Bumped from go-redis default of 10 (per CPU) so notification-srv pub/sub
+	// fan-out and analytics cache reads do not block on contention.
+	DefaultPoolSize = 50
+
+	// DefaultMinIdleConns is the minimum number of idle connections to keep
+	// warm. Eliminates connect-on-first-use latency for hot paths.
+	DefaultMinIdleConns = 5
+
+	// DefaultPoolTimeout caps how long a request waits for a free connection
+	// before failing fast instead of piling up behind a stalled pool.
+	DefaultPoolTimeout = 4 * time.Second
 )
 
 // RedisConfig holds Redis configuration.
+// Pool tunables left at the zero value fall back to the Default* constants.
 type RedisConfig struct {
 	Host     string
 	Port     int
 	Password string
 	DB       int
+
+	PoolSize     int
+	MinIdleConns int
+	PoolTimeout  time.Duration
 }
 
 // DefaultConfig returns a Redis configuration with sensible defaults

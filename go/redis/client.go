@@ -56,10 +56,26 @@ func NewWithLogger(cfg RedisConfig, logger Logger) (IRedis, error) {
 		return nil, ErrInvalidPort
 	}
 
+	poolSize := cfg.PoolSize
+	if poolSize <= 0 {
+		poolSize = DefaultPoolSize
+	}
+	minIdle := cfg.MinIdleConns
+	if minIdle <= 0 {
+		minIdle = DefaultMinIdleConns
+	}
+	poolTimeout := cfg.PoolTimeout
+	if poolTimeout <= 0 {
+		poolTimeout = DefaultPoolTimeout
+	}
+
 	client := goredis.NewClient(&goredis.Options{
-		Addr:     fmt.Sprintf("%s:%d", cfg.Host, cfg.Port),
-		Password: cfg.Password,
-		DB:       cfg.DB,
+		Addr:         fmt.Sprintf("%s:%d", cfg.Host, cfg.Port),
+		Password:     cfg.Password,
+		DB:           cfg.DB,
+		PoolSize:     poolSize,
+		MinIdleConns: minIdle,
+		PoolTimeout:  poolTimeout,
 	})
 
 	ctx, cancel := context.WithTimeout(context.Background(), DefaultConnectTimeout)

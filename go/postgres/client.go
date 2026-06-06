@@ -33,7 +33,9 @@ func (d *defaultLogger) Log(message string) {
 	log.Println(message)
 }
 
-// Config holds PostgreSQL configuration
+// Config holds PostgreSQL configuration.
+// Pool tunables left at the zero value fall back to the Default* constants;
+// callers that need bespoke sizing override per-service.
 type Config struct {
 	Host     string
 	Port     int
@@ -41,6 +43,13 @@ type Config struct {
 	Password string
 	DBName   string
 	SSLMode  string
+
+	// Pool tunables. Zero values fall back to the Default* constants.
+	MaxOpenConns     int
+	MaxIdleConns     int
+	ConnMaxLifetime  time.Duration
+	ConnMaxIdleTime  time.Duration
+	StatementTimeout time.Duration
 }
 
 // New creates a new PostgreSQL client with trace logging
@@ -68,15 +77,27 @@ func NewWithLogger(cfg Config, logger Logger) (IPostgres, error) {
 		cfg.SSLMode = "disable"
 	}
 
-	// Build connection string
-	connStr := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=%s",
-		cfg.Host, cfg.Port, cfg.User, cfg.Password, cfg.DBName, cfg.SSLMode)
+	// Build connection string with libpq-style options so the timeouts apply
+	// to every connection the pool opens, not just the first one we exec on.
+	timeout := cfg.StatementTimeout
+	if timeout <= 0 {
+		timeout = DefaultStatementTimeout
+	}
+	timeoutMs := timeout.Milliseconds()
+	connStr := fmt.Sprintf(
+		"host=%s port=%d user=%s password=%s dbname=%s sslmode=%s "+
+			"options='-c statement_timeout=%d -c idle_in_transaction_session_timeout=%d'",
+		cfg.Host, cfg.Port, cfg.User, cfg.Password, cfg.DBName, cfg.SSLMode,
+		timeoutMs, timeoutMs,
+	)
 
 	// Open database connection
 	db, err := sql.Open("postgres", connStr)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open database connection: %w", err)
 	}
+
+	applyPoolDefaults(db, cfg)
 
 	// Test connection
 	ctx, cancel := context.WithTimeout(context.Background(), DefaultConnectTimeout)
@@ -93,6 +114,35 @@ func NewWithLogger(cfg Config, logger Logger) (IPostgres, error) {
 		logger: logger,
 	}, nil
 }
+
+// applyPoolDefaults wires the Default* constants into the pool when the caller
+// did not override them. Without this every Go service was running on the
+// stdlib defaults (0 max idle conns, no lifetime cap) regardless of what the
+// Default* constants advertised.
+func applyPoolDefaults(db *sql.DB, cfg Config) {
+	maxOpen := cfg.MaxOpenConns
+	if maxOpen <= 0 {
+		maxOpen = DefaultMaxOpenConns
+	}
+	maxIdle := cfg.MaxIdleConns
+	if maxIdle <= 0 {
+		maxIdle = DefaultMaxIdleConns
+	}
+	lifetime := cfg.ConnMaxLifetime
+	if lifetime <= 0 {
+		lifetime = DefaultConnMaxLifetime
+	}
+	idleTime := cfg.ConnMaxIdleTime
+	if idleTime <= 0 {
+		idleTime = DefaultConnMaxIdleTime
+	}
+
+	db.SetMaxOpenConns(maxOpen)
+	db.SetMaxIdleConns(maxIdle)
+	db.SetConnMaxLifetime(lifetime)
+	db.SetConnMaxIdleTime(idleTime)
+}
+
 
 // logQuery logs the query with trace_id if available
 func (c *Client) logQuery(ctx context.Context, query string, args ...interface{}) {

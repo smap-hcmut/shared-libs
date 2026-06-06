@@ -17,6 +17,16 @@ const (
 
 	// DefaultConnMaxLifetime is the default maximum lifetime of a connection
 	DefaultConnMaxLifetime = 5 * time.Minute
+
+	// DefaultConnMaxIdleTime caps how long an idle connection stays in the pool
+	// before being reaped. Bounded so dead backends are detected within minutes
+	// instead of being reused after a Postgres failover.
+	DefaultConnMaxIdleTime = 2 * time.Minute
+
+	// DefaultStatementTimeout is the per-statement server-side timeout applied
+	// to every new session. Prevents runaway queries from pinning a backend
+	// indefinitely; tuned to be longer than the Traefik ingress timeout chain.
+	DefaultStatementTimeout = 30 * time.Second
 )
 
 // DefaultConfig returns a PostgreSQL configuration with sensible defaults
