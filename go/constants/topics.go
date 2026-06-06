@@ -8,7 +8,6 @@ package constants
 //   ingest-srv  --(TopicCollectorOutput)--> analysis-srv
 //   analysis-srv --(TopicAnalytics*)--> knowledge-srv
 //   project-srv  --(TopicProjectEvents)--> (project-srv consumer)
-//   identity-srv --(TopicAuditEvents)-->  (identity-srv consumer)
 
 const (
 	// TopicCollectorOutput is produced by ingest-srv after UAP normalisation
@@ -32,10 +31,6 @@ const (
 	// TopicProjectEvents is produced by project-srv on lifecycle transitions
 	// (activate, pause, resume, archive).
 	TopicProjectEvents = "project.events"
-
-	// TopicAuditEvents is produced and consumed by identity-srv for audit
-	// logging.
-	TopicAuditEvents = "audit.events"
 )
 
 // Dead-letter queue topics used by knowledge-srv when processing fails.
