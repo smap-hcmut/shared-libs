@@ -16,6 +16,8 @@ type Client struct {
 	db     *sql.DB
 	tracer tracing.TraceContext
 	logger Logger
+
+	logQueries bool
 }
 
 // Ensure Client implements IPostgres
@@ -50,6 +52,12 @@ type Config struct {
 	ConnMaxLifetime  time.Duration
 	ConnMaxIdleTime  time.Duration
 	StatementTimeout time.Duration
+
+	// LogQueries enables per-query trace logging. Off by default because
+	// it produces one structured log line per SQL statement which, at
+	// steady state across multiple services, generates significant I/O
+	// noise through the fluent-bit → Loki pipeline.
+	LogQueries bool
 }
 
 // New creates a new PostgreSQL client with trace logging
@@ -109,9 +117,10 @@ func NewWithLogger(cfg Config, logger Logger) (IPostgres, error) {
 	}
 
 	return &Client{
-		db:     db,
-		tracer: tracing.NewTraceContext(),
-		logger: logger,
+		db:         db,
+		tracer:     tracing.NewTraceContext(),
+		logger:     logger,
+		logQueries: cfg.LogQueries,
 	}, nil
 }
 
@@ -144,16 +153,20 @@ func applyPoolDefaults(db *sql.DB, cfg Config) {
 }
 
 
-// logQuery logs the query with trace_id if available
+// logQuery logs the query with trace_id if available, only when the
+// caller opted into query logging via Config.LogQueries. Defaulting to
+// off avoids blasting every SQL statement through structured logging
+// (→ fluent-bit → Loki) on every service at steady state.
 func (c *Client) logQuery(ctx context.Context, query string, args ...interface{}) {
+	if !c.logQueries {
+		return
+	}
 	traceID := c.tracer.GetTraceID(ctx)
 
 	var logMessage string
 	if traceID != "" {
-		// Format: "trace_id={uuid} query={sql}"
 		logMessage = fmt.Sprintf("trace_id=%s query=%s", traceID, query)
 	} else {
-		// Graceful handling when no trace_id exists
 		logMessage = fmt.Sprintf("query=%s", query)
 	}
 
