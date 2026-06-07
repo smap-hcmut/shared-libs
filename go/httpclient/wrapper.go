@@ -18,7 +18,7 @@ type TracedHTTPClient struct {
 // This is useful for services that need to add tracing to existing http.Client instances.
 func NewTracedHTTPClient(client *http.Client) *TracedHTTPClient {
 	if client == nil {
-		client = &http.Client{}
+		client = &http.Client{Timeout: DefaultTimeout}
 	}
 
 	// Create tracing components
