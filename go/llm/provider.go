@@ -154,9 +154,12 @@ func (p *provider) Generate(ctx context.Context, prompt string) (string, error) 
 // ── OpenAI Chat Completions request/response types ──────────────────────────
 
 type chatRequest struct {
-	Model    string        `json:"model"`
-	Messages []chatMessage `json:"messages"`
+	Model     string        `json:"model"`
+	Messages  []chatMessage `json:"messages"`
+	MaxTokens int           `json:"max_tokens,omitempty"`
 }
+
+const defaultMaxTokens = 2048
 
 type chatMessage struct {
 	Role    string `json:"role"`
@@ -179,7 +182,8 @@ type chatResponse struct {
 
 func (p *provider) doRequest(ctx context.Context, prompt string) (string, error) {
 	reqBody := chatRequest{
-		Model: p.model,
+		Model:     p.model,
+		MaxTokens: defaultMaxTokens,
 		Messages: []chatMessage{
 			{Role: "user", Content: prompt},
 		},
@@ -249,8 +253,9 @@ func (p *provider) GenerateStream(ctx context.Context, prompt string) (<-chan st
 			Stream bool `json:"stream"`
 		}{
 			chatRequest: chatRequest{
-				Model:    p.model,
-				Messages: []chatMessage{{Role: "user", Content: prompt}},
+				Model:     p.model,
+				MaxTokens: defaultMaxTokens,
+				Messages:  []chatMessage{{Role: "user", Content: prompt}},
 			},
 			Stream: true,
 		}
